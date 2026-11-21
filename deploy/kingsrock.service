@@ -1,0 +1,54 @@
+# KINGSROCK systemd unit
+#   sudo cp deploy/kingsrock.service /etc/systemd/system/kingsrock.service
+#   sudo systemctl daemon-reload && sudo systemctl enable --now kingsrock
+#   journalctl -u kingsrock -f          # live logs
+[Unit]
+Description=KINGSROCK Discord music bot
+Documentation=file:///opt/kingsrock/SETUP.md
+Wants=network-online.target
+After=network-online.target
+# Restart at most 10 times in 5 minutes (e.g. invalid token): then stop and wait for you.
+StartLimitIntervalSec=300
+StartLimitBurst=10
+
+[Service]
+Type=simple
+User=kingsrock
+Group=kingsrock
+WorkingDirectory=/opt/kingsrock
+# Secrets live outside the code directory, readable only by root + kingsrock.
+EnvironmentFile=/etc/kingsrock/kingsrock.env
+Environment=NODE_ENV=production
+ExecStart=/usr/bin/node src/index.js
+# Process supervision: restart after crashes / network failures.
+Restart=always
+RestartSec=5
+# Graceful shutdown: SIGTERM -> KINGSROCK leaves voice channels and stops FFmpeg.
+KillSignal=SIGTERM
+TimeoutStopSec=20
+KillMode=control-group
+
+# Resource guard rails (generous for a music bot; tune for tiny VMs).
+MemoryHigh=400M
+MemoryMax=600M
+TasksMax=128
+
+# Hardening
+NoNewPrivileges=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/kingsrock/data
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+LockPersonality=true
+RestrictRealtime=true
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX AF_NETLINK
+CapabilityBoundingSet=
+UMask=0077
+
+[Install]
+WantedBy=multi-user.target

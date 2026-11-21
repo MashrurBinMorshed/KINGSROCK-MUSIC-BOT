@@ -1,0 +1,26 @@
+# Secrets: never commit
+.env
+.env.*
+!.env.example
+*.env
+!deploy/*.env.example
+
+# Dependencies
+node_modules/
+
+# Runtime data
+data/
+*.lock
+!package-lock.json
+*.tmp
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
