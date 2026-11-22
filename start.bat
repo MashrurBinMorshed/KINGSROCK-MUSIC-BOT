@@ -19,6 +19,14 @@ goto :node_ok
 :node_install
 if defined KR_NODE_TRIED goto :node_fail
 set KR_NODE_TRIED=1
+rem A usable Node may already be installed but hidden behind an older one on the PATH.
+if not exist "%ProgramFiles%\nodejs\node.exe" goto :node_winget
+"%ProgramFiles%\nodejs\node.exe" -e "process.exit(parseInt(process.versions.node)<22?1:0)"
+if errorlevel 1 goto :node_winget
+set "PATH=%ProgramFiles%\nodejs;%PATH%"
+goto :check_node
+
+:node_winget
 where winget >nul 2>nul
 if errorlevel 1 goto :node_fail
 echo Node.js ^(version 22 or newer^) is needed. Installing Node.js 24 now...
