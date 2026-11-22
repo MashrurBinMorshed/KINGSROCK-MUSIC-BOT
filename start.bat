@@ -104,18 +104,11 @@ goto :end
 
 :token_ok
 echo.
-set "KR_CID="
-set /p "KR_CID=Application ID of this bot ^(Developer Portal, General Information^). Press Enter to skip: "
-set "KR_YT="
-set /p "KR_YT=Turn on YouTube support? Press Enter for Yes, or type N for No: "
-set "KR_YTVAL=true"
-if /i "%KR_YT%"=="N" set "KR_YTVAL=false"
 > ".env" (
   echo NODE_ENV=production
   echo DISCORD_TOKEN=%KR_TOKEN%
-  echo YOUTUBE_ENABLED=%KR_YTVAL%
+  echo YOUTUBE_ENABLED=true
 )
-if defined KR_CID >> ".env" echo DISCORD_CLIENT_ID=%KR_CID%
 set "KR_TOKEN="
 echo Settings saved.
 :env_ok
@@ -147,14 +140,15 @@ if errorlevel 1 (
 :deps_ok
 
 rem ---- 5. Register the slash commands (needs DISCORD_CLIENT_ID) -------------
-findstr /b /i /r /c:"DISCORD_CLIENT_ID=[0-9][0-9]*" ".env" >nul 2>nul
-if errorlevel 1 goto :register_skip
-if exist "data\.registered" goto :register_skip
-echo Registering slash commands for this bot...
+set "KR_CID="
+for /f "delims=" %%i in ('node scripts\get-client-id.js 2^>nul') do set "KR_CID=%%i"
+if not defined KR_CID goto :register_skip
+if exist "data\.registered-%KR_CID%" goto :register_skip
+echo Registering slash commands for this bot ^(one time^)...
 call npm run register:global
 if not errorlevel 1 (
   if not exist "data" mkdir "data"
-  > "data\.registered" echo done
+  > "data\.registered-%KR_CID%" echo done
 )
 :register_skip
 
